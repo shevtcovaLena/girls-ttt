@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   initializeBoard,
   calculateWinner,
@@ -169,48 +169,86 @@ function useGame(userId?: number, onGameEnd?: (status: 'win' | 'lose', promoCode
   };
 }
 
-function initializeTelegramData() {
-  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-    const tg = window.Telegram.WebApp;
-    
-    // Notify Telegram that the app is ready
-    tg.ready();
-    
-    // Try to get user data from initDataUnsafe (easier but less secure)
-    if (tg.initDataUnsafe?.user) {
-      const user = tg.initDataUnsafe.user;
-      return {
-        userId: user.id,
-        userName: user.first_name || user.username || 'Player',
-        isInitialized: true,
-      };
-    } else if (tg.initData) {
-      // Parse initData manually
-      const { userId: parsedUserId, userName: parsedUserName } = parseInitData(tg.initData);
-      if (parsedUserId) {
-        return {
-          userId: parsedUserId,
-          userName: parsedUserName || 'Player',
-          isInitialized: true,
-        };
-      }
-    }
-  }
-  
-  // Default: initialized but no user data (or not in Telegram context)
-  return {
-    userId: undefined,
-    userName: '',
-    isInitialized: true,
-  };
-}
-
 export default function Home() {
-  const [telegramData] = useState<{
+  const [telegramData, setTelegramData] = useState<{
     userId?: number;
     userName: string;
     isInitialized: boolean;
-  }>(initializeTelegramData);
+  }>({
+    userId: undefined,
+    userName: '',
+    isInitialized: false,
+  });
+
+  const initializedRef = useRef(false);
+
+  // Initialize Telegram WebApp after component mounts
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    // Wait for Telegram WebApp SDK to load
+    const initTelegram = () => {
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        const tg = window.Telegram.WebApp;
+        
+        // Notify Telegram that the app is ready
+        tg.ready();
+        
+        // Try to get user data from initDataUnsafe (easier but less secure)
+        if (tg.initDataUnsafe?.user) {
+          const user = tg.initDataUnsafe.user;
+          setTelegramData({
+            userId: user.id,
+            userName: user.first_name || user.username || 'Player',
+            isInitialized: true,
+          });
+          return;
+        } else if (tg.initData) {
+          // Parse initData manually
+          const { userId: parsedUserId, userName: parsedUserName } = parseInitData(tg.initData);
+          if (parsedUserId) {
+            setTelegramData({
+              userId: parsedUserId,
+              userName: parsedUserName || 'Player',
+              isInitialized: true,
+            });
+            return;
+          }
+        }
+      }
+      
+      // Mark as initialized even if no user data (not in Telegram context or no data)
+      setTelegramData((prev) => ({
+        ...prev,
+        isInitialized: true,
+      }));
+    };
+
+    // Check if Telegram WebApp is already loaded
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      initTelegram();
+    } else {
+      // Wait for script to load
+      const checkInterval = setInterval(() => {
+        if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+          clearInterval(checkInterval);
+          initTelegram();
+        }
+      }, 100);
+
+      // Timeout after 3 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        setTelegramData((prev) => {
+          if (!prev.isInitialized) {
+            return { ...prev, isInitialized: true };
+          }
+          return prev;
+        });
+      }, 3000);
+    }
+  }, []);
 
   // Callback for game end events
   const handleGameEnd = useCallback(
