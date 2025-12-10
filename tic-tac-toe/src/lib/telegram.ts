@@ -17,6 +17,7 @@ export type GameStatus = 'win' | 'lose';
  * Request body structure for the notification API endpoint.
  */
 interface NotificationRequest {
+  userId: number;
   status: GameStatus;
   promoCode?: string;
 }
@@ -28,6 +29,7 @@ interface NotificationRequest {
  * Telegram API communication server-side. Errors are logged but not thrown
  * to ensure the game UX is not interrupted.
  * 
+ * @param userId - Telegram user ID (chat_id) to send notification to
  * @param status - The game result: 'win' for player victory, 'lose' for defeat
  * @param promoCode - Optional promo code (required when status is 'win')
  * 
@@ -35,23 +37,30 @@ interface NotificationRequest {
  * 
  * @example
  * // Player wins - send notification with promo code
- * await sendTelegramNotification('win', 'A7K3D');
+ * await sendTelegramNotification(123456789, 'win', 'A7K3D');
  * // Sends: "Победа! Промокод выдан: A7K3D"
  * 
  * @example
  * // Player loses - send notification without promo code
- * await sendTelegramNotification('lose');
+ * await sendTelegramNotification(123456789, 'lose');
  * // Sends: "Проигрыш"
  * 
  * @example
  * // Error handling is automatic - game continues even if notification fails
- * await sendTelegramNotification('win', 'X9Q2B');
+ * await sendTelegramNotification(123456789, 'win', 'X9Q2B');
  * // If API fails, error is logged to console but no exception is thrown
  */
 export async function sendTelegramNotification(
+  userId: number,
   status: GameStatus,
   promoCode?: string
 ): Promise<void> {
+  // Validate userId
+  if (!userId || typeof userId !== 'number') {
+    console.warn('sendTelegramNotification: userId is required and must be a number');
+    return;
+  }
+
   // Validate that promoCode is provided when status is 'win'
   if (status === 'win' && !promoCode) {
     console.warn(
@@ -61,6 +70,7 @@ export async function sendTelegramNotification(
 
   // Prepare request body
   const body: NotificationRequest = {
+    userId,
     status,
     ...(promoCode && { promoCode }),
   };

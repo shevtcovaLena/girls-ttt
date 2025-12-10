@@ -15,9 +15,59 @@ import { sendTelegramNotification } from '@/lib/telegram';
 type GameStatus = 'active' | 'won' | 'lost' | 'draw';
 
 /**
+ * Telegram WebApp interface
+ */
+interface TelegramWebApp {
+  ready: () => void;
+  initData: string;
+  initDataUnsafe?: {
+    user?: {
+      id: number;
+      first_name: string;
+      last_name?: string;
+      username?: string;
+    };
+  };
+}
+
+/**
+ * Extends Window interface to include Telegram WebApp
+ */
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: TelegramWebApp;
+    };
+  }
+}
+
+/**
+ * Parses Telegram initData string to extract user information
+ */
+function parseInitData(initData: string): { userId?: number; userName?: string } {
+  try {
+    // Parse URL-encoded initData
+    const params = new URLSearchParams(initData);
+    const userParam = params.get('user');
+    
+    if (userParam) {
+      const user = JSON.parse(decodeURIComponent(userParam));
+      return {
+        userId: user.id,
+        userName: user.first_name || user.username || 'Player',
+      };
+    }
+  } catch (error) {
+    console.error('Error parsing initData:', error);
+  }
+  
+  return {};
+}
+
+/**
  * Custom hook for managing game state and logic
  */
-function useGame() {
+function useGame(userId?: number, onGameEnd?: (status: 'win' | 'lose', promoCode?: string) => void) {
   const [board, setBoard] = useState<Board>(initializeBoard);
   const [gameStatus, setGameStatus] = useState<GameStatus>('active');
   const [lastPromoCode, setLastPromoCode] = useState<string | null>(null);
@@ -49,8 +99,10 @@ function useGame() {
         const promoCode = generatePromoCode();
         setLastPromoCode(promoCode);
         setGameStatus('won');
-        // Send Telegram notification
-        await sendTelegramNotification('win', promoCode);
+        // Send Telegram notification via callback
+        if (onGameEnd) {
+          onGameEnd('win', promoCode);
+        }
         return;
       }
 
@@ -77,8 +129,10 @@ function useGame() {
         if (winnerAfterComputer === 'O') {
           setGameStatus('lost');
           setIsComputerThinking(false);
-          // Send Telegram notification
-          await sendTelegramNotification('lose');
+          // Send Telegram notification via callback
+          if (onGameEnd) {
+            onGameEnd('lose');
+          }
           return;
         }
 
@@ -92,7 +146,7 @@ function useGame() {
 
       setIsComputerThinking(false);
     },
-    [board, gameStatus, isComputerThinking]
+    [board, gameStatus, isComputerThinking, onGameEnd]
   );
 
   /**
@@ -115,7 +169,59 @@ function useGame() {
   };
 }
 
+function initializeTelegramData() {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    const tg = window.Telegram.WebApp;
+    
+    // Notify Telegram that the app is ready
+    tg.ready();
+    
+    // Try to get user data from initDataUnsafe (easier but less secure)
+    if (tg.initDataUnsafe?.user) {
+      const user = tg.initDataUnsafe.user;
+      return {
+        userId: user.id,
+        userName: user.first_name || user.username || 'Player',
+        isInitialized: true,
+      };
+    } else if (tg.initData) {
+      // Parse initData manually
+      const { userId: parsedUserId, userName: parsedUserName } = parseInitData(tg.initData);
+      if (parsedUserId) {
+        return {
+          userId: parsedUserId,
+          userName: parsedUserName || 'Player',
+          isInitialized: true,
+        };
+      }
+    }
+  }
+  
+  // Default: initialized but no user data (or not in Telegram context)
+  return {
+    userId: undefined,
+    userName: '',
+    isInitialized: true,
+  };
+}
+
 export default function Home() {
+  const [telegramData] = useState<{
+    userId?: number;
+    userName: string;
+    isInitialized: boolean;
+  }>(initializeTelegramData);
+
+  // Callback for game end events
+  const handleGameEnd = useCallback(
+    async (status: 'win' | 'lose', promoCode?: string) => {
+      if (telegramData.userId) {
+        await sendTelegramNotification(telegramData.userId, status, promoCode);
+      }
+    },
+    [telegramData.userId]
+  );
+
   const {
     board,
     gameStatus,
@@ -123,7 +229,7 @@ export default function Home() {
     isComputerThinking,
     handleCellClick,
     resetGame,
-  } = useGame();
+  } = useGame(telegramData.userId, handleGameEnd);
 
   // Determine status message
   const getStatusMessage = (): string => {
@@ -143,11 +249,39 @@ export default function Home() {
     );
   };
 
+  // Show error if not opened from Telegram bot
+  if (telegramData.isInitialized && !telegramData.userId) {
+    return (
+      <div style={{ padding: '20px', fontFamily: 'sans-serif', textAlign: 'center' }}>
+        <h1 style={{ marginBottom: '20px', color: '#d32f2f' }}>
+          Ошибка доступа
+        </h1>
+        <p style={{ fontSize: '18px', color: '#666' }}>
+          Откройте приложение из Telegram бота
+        </p>
+      </div>
+    );
+  }
+
+  // Show loading state while initializing
+  if (!telegramData.isInitialized) {
+    return (
+      <div style={{ padding: '20px', fontFamily: 'sans-serif', textAlign: 'center' }}>
+        <p>Загрузка...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>
+      <h1 style={{ textAlign: 'center', marginBottom: '10px' }}>
         Tic-Tac-Toe Game
       </h1>
+      {telegramData.userName && (
+        <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666', fontSize: '16px' }}>
+          Привет, {telegramData.userName}! 👋
+        </p>
+      )}
 
       {/* Game Status */}
       <div style={{ textAlign: 'center', marginBottom: '20px', fontSize: '18px' }}>

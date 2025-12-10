@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Request body structure for the notification endpoint.
  */
 interface NotificationRequestBody {
+  userId: number;
   status: 'win' | 'lose';
   promoCode?: string;
 }
@@ -37,16 +38,24 @@ interface TelegramResponse {
  * 
  * @example
  * POST /api/notify
- * Body: { "status": "win", "promoCode": "A7K3D" }
+ * Body: { "userId": 123456789, "status": "win", "promoCode": "A7K3D" }
  * Response: { "success": true, "message": "Notification sent" }
  */
 export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body: NotificationRequestBody = await request.json();
-    const { status, promoCode } = body;
+    const { userId, status, promoCode } = body;
 
     // Validate required fields
+    if (!userId || typeof userId !== 'number') {
+      console.error('Invalid or missing userId in notification request');
+      return NextResponse.json(
+        { success: true, message: 'Invalid userId, but continuing' },
+        { status: 200 }
+      );
+    }
+
     if (!status || (status !== 'win' && status !== 'lose')) {
       console.error('Invalid status in notification request:', status);
       return NextResponse.json(
@@ -60,14 +69,13 @@ export async function POST(request: NextRequest) {
       console.warn('Win status provided without promoCode');
     }
 
-    // Get environment variables
+    // Get bot token from environment variables
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
 
-    // Check if environment variables are set
-    if (!botToken || !chatId) {
+    // Check if bot token is set
+    if (!botToken) {
       console.error(
-        'Telegram credentials not configured. Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID'
+        'Telegram bot token not configured. Missing TELEGRAM_BOT_TOKEN'
       );
       // Still return success to not break game UX
       return NextResponse.json({
@@ -96,7 +104,7 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chat_id: chatId,
+          chat_id: userId,
           text: messageText,
         }),
       });
