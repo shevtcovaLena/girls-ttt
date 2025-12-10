@@ -1,3 +1,5 @@
+import styles from '@/app/game.module.css';
+
 /**
  * SVG компонент для O с текстурой помады
  */
@@ -12,11 +14,11 @@ export default function LipstickO() {
     >
       <defs>
         <linearGradient id="lipstickGradientO" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#5a6964" />
-          <stop offset="25%" stopColor="#6b7d77" />
-          <stop offset="50%" stopColor="#5a6964" />
-          <stop offset="75%" stopColor="#4a5853" />
-          <stop offset="100%" stopColor="#5a6964" />
+          <stop offset="0%" stopColor="#60ae94" />
+          <stop offset="25%" stopColor="#79bba5" />
+          <stop offset="50%" stopColor="#60ae94" />
+          <stop offset="75%" stopColor="#4f9f82" />
+          <stop offset="100%" stopColor="#60ae94" />
         </linearGradient>
         <filter id="glowO">
           <feGaussianBlur stdDeviation="1.2" result="coloredBlur" />
@@ -47,8 +49,8 @@ export default function LipstickO() {
         strokeWidth="5"
         fill="none"
         filter="url(#glowO)"
+        className={styles.drawStrokeCircle}
         style={{
-          animation: 'drawStroke 0.5s ease-out forwards',
           strokeDasharray: 113.1,
           strokeDashoffset: 113.1,
         }}
@@ -90,4 +92,3 @@ export default function LipstickO() {
     </svg>
   );
 }
-

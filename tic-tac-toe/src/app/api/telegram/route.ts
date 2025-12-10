@@ -86,13 +86,7 @@ async function sendTelegramMessage(
  */
 async function handleStartCommand(
   botToken: string,
-  chatId: number,
-  from?: {
-    id: number;
-    is_bot: boolean;
-    first_name: string;
-    username?: string;
-  }
+  chatId: number
 ): Promise<void> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -177,7 +171,7 @@ export async function POST(request: NextRequest) {
 
       // Handle /start command
       if (text === '/start') {
-        await handleStartCommand(botToken, chatId, from);
+        await handleStartCommand(botToken, chatId);
       } else if (text) {
         // Handle other text messages (optional)
         console.log(`Received text message: "${text}" from chat ${chatId}`);

@@ -1,3 +1,5 @@
+import styles from '@/app/game.module.css';
+
 /**
  * SVG компонент для X с текстурой помады
  */
@@ -29,10 +31,6 @@ export default function LipstickX() {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="textureX">
-          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" result="noise" />
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="1" />
-        </filter>
       </defs>
       
       {/* Тень для глубины */}
@@ -61,8 +59,8 @@ export default function LipstickX() {
         strokeLinecap="round"
         strokeLinejoin="round"
         filter="url(#glowX)"
+        className={styles.drawStroke}
         style={{
-          animation: 'drawStroke 0.4s ease-out forwards',
           strokeDasharray: 42.43,
           strokeDashoffset: 42.43,
         }}
@@ -76,8 +74,8 @@ export default function LipstickX() {
         strokeLinecap="round"
         strokeLinejoin="round"
         filter="url(#glowX)"
+        className={styles.drawStrokeDelayed}
         style={{
-          animation: 'drawStroke 0.4s ease-out 0.2s forwards',
           strokeDasharray: 42.43,
           strokeDashoffset: 42.43,
         }}
@@ -110,4 +108,3 @@ export default function LipstickX() {
     </svg>
   );
 }
-
