@@ -11,6 +11,8 @@ import {
 } from '@/lib/gameLogic';
 import { generatePromoCode } from '@/lib/generatePromoCode';
 import { sendTelegramNotification } from '@/lib/telegram';
+import LipstickX from '@/components/LipstickX';
+import LipstickO from '@/components/LipstickO';
 
 type GameStatus = 'active' | 'won' | 'lost' | 'draw';
 
@@ -67,11 +69,12 @@ function parseInitData(initData: string): { userId?: number; userName?: string }
 /**
  * Custom hook for managing game state and logic
  */
-function useGame(userId?: number, onGameEnd?: (status: 'win' | 'lose', promoCode?: string) => void) {
+function useGame(userId?: number, onGameEnd?: (promoCode: string) => void) {
   const [board, setBoard] = useState<Board>(initializeBoard);
   const [gameStatus, setGameStatus] = useState<GameStatus>('active');
   const [lastPromoCode, setLastPromoCode] = useState<string | null>(null);
   const [isComputerThinking, setIsComputerThinking] = useState(false);
+  const [lastMoveIndex, setLastMoveIndex] = useState<number | null>(null);
 
   /**
    * Handles player's cell click
@@ -92,6 +95,7 @@ function useGame(userId?: number, onGameEnd?: (status: 'win' | 'lose', promoCode
       const newBoard: Board = [...board] as Board;
       newBoard[index] = 'X';
       setBoard(newBoard);
+      setLastMoveIndex(index);
 
       // Check for player win
       const winner = calculateWinner(newBoard);
@@ -99,9 +103,9 @@ function useGame(userId?: number, onGameEnd?: (status: 'win' | 'lose', promoCode
         const promoCode = generatePromoCode();
         setLastPromoCode(promoCode);
         setGameStatus('won');
-        // Send Telegram notification via callback
+        // Send Telegram notification via callback (only on win)
         if (onGameEnd) {
-          onGameEnd('win', promoCode);
+          onGameEnd(promoCode);
         }
         return;
       }
@@ -115,24 +119,22 @@ function useGame(userId?: number, onGameEnd?: (status: 'win' | 'lose', promoCode
       // Computer's turn
       setIsComputerThinking(true);
       
-      // Add delay to simulate computer thinking (200-300ms)
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      // Add delay to simulate computer thinking (800-1000ms for better UX)
+      await new Promise((resolve) => setTimeout(resolve, 900));
 
       const computerMove = getComputerMove(newBoard);
       if (computerMove !== -1) {
         const boardAfterComputer: Board = [...newBoard] as Board;
         boardAfterComputer[computerMove] = 'O';
         setBoard(boardAfterComputer);
+        setLastMoveIndex(computerMove);
 
         // Check for computer win
         const winnerAfterComputer = calculateWinner(boardAfterComputer);
         if (winnerAfterComputer === 'O') {
           setGameStatus('lost');
           setIsComputerThinking(false);
-          // Send Telegram notification via callback
-          if (onGameEnd) {
-            onGameEnd('lose');
-          }
+          // No notification sent on loss
           return;
         }
 
@@ -157,6 +159,7 @@ function useGame(userId?: number, onGameEnd?: (status: 'win' | 'lose', promoCode
     setGameStatus('active');
     setLastPromoCode(null);
     setIsComputerThinking(false);
+    setLastMoveIndex(null);
   }, []);
 
   return {
@@ -164,6 +167,7 @@ function useGame(userId?: number, onGameEnd?: (status: 'win' | 'lose', promoCode
     gameStatus,
     lastPromoCode,
     isComputerThinking,
+    lastMoveIndex,
     handleCellClick,
     resetGame,
   };
@@ -250,11 +254,11 @@ export default function Home() {
     }
   }, []);
 
-  // Callback for game end events
+  // Callback for game end events (only for wins with promo code)
   const handleGameEnd = useCallback(
-    async (status: 'win' | 'lose', promoCode?: string) => {
+    async (promoCode: string) => {
       if (telegramData.userId) {
-        await sendTelegramNotification(telegramData.userId, status, promoCode);
+        await sendTelegramNotification(telegramData.userId, 'win', promoCode);
       }
     },
     [telegramData.userId]
@@ -265,17 +269,18 @@ export default function Home() {
     gameStatus,
     lastPromoCode,
     isComputerThinking,
+    lastMoveIndex,
     handleCellClick,
     resetGame,
   } = useGame(telegramData.userId, handleGameEnd);
 
   // Determine status message
   const getStatusMessage = (): string => {
-    if (gameStatus === 'won') return 'You won!';
-    if (gameStatus === 'lost') return 'You lost!';
-    if (gameStatus === 'draw') return "It's a Draw!";
-    if (isComputerThinking) return 'Computer thinking...';
-    return 'Your turn';
+    if (gameStatus === 'won') return 'Вы выиграли! 🎉';
+    if (gameStatus === 'lost') return 'Вы проиграли 😔';
+    if (gameStatus === 'draw') return 'Ничья! 🤝';
+    if (isComputerThinking) return 'Компьютер думает...';
+    return 'Ваш ход';
   };
 
   // Check if cell is disabled
@@ -287,82 +292,289 @@ export default function Home() {
     );
   };
 
-  // Show error if not opened from Telegram bot
-  if (telegramData.isInitialized && !telegramData.userId) {
-    return (
-      <div style={{ padding: '20px', fontFamily: 'sans-serif', textAlign: 'center' }}>
-        <h1 style={{ marginBottom: '20px', color: '#d32f2f' }}>
-          Ошибка доступа
-        </h1>
-        <p style={{ fontSize: '18px', color: '#666' }}>
-          Откройте приложение из Telegram бота
-        </p>
-      </div>
-    );
-  }
+  // Telegram bot URL (can be set via environment variable)
+  // Default to a placeholder that should be replaced with actual bot URL
+  const telegramBotUrl =
+    process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || 'https://t.me/your_bot_username';
 
   // Show loading state while initializing
   if (!telegramData.isInitialized) {
     return (
-      <div style={{ padding: '20px', fontFamily: 'sans-serif', textAlign: 'center' }}>
-        <p>Загрузка...</p>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--color-bg-primary)',
+        }}
+      >
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: '18px' }}>
+          Загрузка...
+        </p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '10px' }}>
-        Tic-Tac-Toe Game
+    <div
+      style={{
+        minHeight: '100vh',
+        padding: '32px 20px',
+        background: 'var(--color-bg-primary)',
+        maxWidth: '600px',
+        margin: '0 auto',
+      }}
+    >
+      <h1
+        style={{
+          textAlign: 'center',
+          marginBottom: '12px',
+          color: 'var(--color-text-primary)',
+          fontSize: '2.5rem',
+          fontWeight: 700,
+        }}
+      >
+        Крестики-Нолики
       </h1>
       {telegramData.userName && (
-        <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666', fontSize: '16px' }}>
+        <p
+          style={{
+            textAlign: 'center',
+            marginBottom: '20px',
+            color: 'var(--color-text-secondary)',
+            fontSize: '18px',
+            fontWeight: 500,
+          }}
+        >
           Привет, {telegramData.userName}! 👋
         </p>
       )}
+      
+      {/* Telegram bot link if not opened from Telegram */}
+      {telegramData.isInitialized && !telegramData.userId && (
+        <div
+          style={{
+            textAlign: 'center',
+            marginBottom: '32px',
+            padding: '20px',
+            background: 'var(--color-bg-secondary)',
+            borderRadius: 'var(--radius-large)',
+            boxShadow: 'var(--shadow-soft)',
+          }}
+        >
+          <p
+            style={{
+              marginBottom: '16px',
+              fontSize: '16px',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            💄 Для получения промокодов откройте игру в Telegram боте
+          </p>
+          <a
+            href={telegramBotUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-block',
+              padding: '14px 28px',
+              fontSize: '16px',
+              fontWeight: 600,
+              backgroundColor: 'var(--color-button)',
+              color: 'white',
+              textDecoration: 'none',
+              border: 'none',
+              borderRadius: 'var(--radius-button)',
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-soft)',
+              transition: 'all 0.2s ease-out',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-button-hover)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-button)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-soft)';
+            }}
+          >
+            Открыть в Telegram
+          </a>
+        </div>
+      )}
 
       {/* Game Status */}
-      <div style={{ textAlign: 'center', marginBottom: '20px', fontSize: '18px' }}>
+      <div
+        style={{
+          textAlign: 'center',
+          marginBottom: '32px',
+          fontSize: '20px',
+          fontWeight: 600,
+          color: 'var(--color-text-secondary)',
+        }}
+      >
         {getStatusMessage()}
       </div>
 
       {/* Promo Code Display */}
       {lastPromoCode && gameStatus === 'won' && (
-        <div style={{ textAlign: 'center', marginBottom: '20px', fontSize: '16px' }}>
-          Your promo code: <strong>{lastPromoCode}</strong>
+        <div
+          style={{
+            textAlign: 'center',
+            marginBottom: '32px',
+            padding: '20px',
+            background: 'var(--color-bg-secondary)',
+            borderRadius: 'var(--radius-large)',
+            boxShadow: 'var(--shadow-strong)',
+            animation: 'winCelebration 0.6s ease-out',
+          }}
+        >
+          <p
+            style={{
+              marginBottom: '12px',
+              fontSize: '16px',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            Ваш промокод:
+          </p>
+          <div
+            style={{
+              fontSize: '28px',
+              fontWeight: 700,
+              color: 'var(--color-accent-3)',
+              letterSpacing: '0.1em',
+              textShadow: '0 2px 8px rgba(202, 110, 135, 0.3)',
+            }}
+          >
+            {lastPromoCode}
+          </div>
+          {!telegramData.userId && (
+            <p
+              style={{
+                marginTop: '12px',
+                fontSize: '14px',
+                color: 'var(--color-text-light)',
+                fontStyle: 'italic',
+              }}
+            >
+              Промокод будет отправлен в Telegram при игре через бота
+            </p>
+          )}
         </div>
       )}
 
       {/* Game Board */}
       <div
+        className="game-board"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 80px)',
-          gridTemplateRows: 'repeat(3, 80px)',
-          gap: '4px',
+          gridTemplateColumns: 'repeat(3, 100px)',
+          gridTemplateRows: 'repeat(3, 100px)',
+          gap: '12px',
           justifyContent: 'center',
-          marginBottom: '20px',
+          marginBottom: '40px',
         }}
       >
-        {board.map((cell, index) => (
-          <button
-            key={index}
-            onClick={() => handleCellClick(index)}
-            disabled={isCellDisabled(index)}
-            style={{
-              width: '80px',
-              height: '80px',
-              fontSize: '24px',
-              fontWeight: 'bold',
-              backgroundColor: cell ? '#f0f0f0' : 'white',
-              border: '2px solid #333',
-              cursor: isCellDisabled(index) ? 'not-allowed' : 'pointer',
-              color: '#000',
-            }}
-          >
-            {cell || ''}
-          </button>
-        ))}
+        {board.map((cell, index) => {
+          const isLastMove = lastMoveIndex === index;
+          const isComputerMove = isLastMove && cell === 'O'; // Анимация только для хода компьютера
+          
+          return (
+            <button
+              key={index}
+              onClick={() => handleCellClick(index)}
+              disabled={isCellDisabled(index)}
+              style={{
+                width: '100px',
+                height: '100px',
+                fontSize: '36px',
+                fontWeight: 700,
+                backgroundColor: cell
+                  ? 'var(--color-bg-secondary)'
+                  : 'var(--color-bg-secondary)',
+                border: `2px solid ${cell ? 'var(--color-accent-1)' : 'var(--color-secondary)'}`,
+                borderRadius: 'var(--radius-medium)',
+                color: cell === 'X' ? 'var(--color-mark-x)' : 'var(--color-mark-o)',
+                boxShadow: cell
+                  ? 'var(--shadow-soft)'
+                  : 'none',
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                opacity: isCellDisabled(index) && !cell ? 0.5 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                position: 'relative',
+                overflow: 'hidden',
+                animation: isComputerMove
+                  ? 'cellAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                  : undefined,
+              }}
+              onMouseEnter={(e) => {
+                if (!isCellDisabled(index)) {
+                  e.currentTarget.style.transform = 'scale(1.08)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
+                  e.currentTarget.style.borderColor = 'var(--color-accent-3)';
+                  
+                  // Активировать блик для пустых клеток
+                  if (!cell) {
+                    const shineOverlay = e.currentTarget.querySelector('.shine-overlay') as HTMLElement;
+                    if (shineOverlay) {
+                      shineOverlay.style.opacity = '1';
+                      shineOverlay.style.animation = 'shine 0.6s ease-out';
+                    }
+                  }
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isCellDisabled(index)) {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = cell ? 'var(--shadow-soft)' : 'none';
+                  e.currentTarget.style.borderColor = cell
+                    ? 'var(--color-accent-1)'
+                    : 'var(--color-secondary)';
+                  
+                  // Убрать блик
+                  const shineOverlay = e.currentTarget.querySelector('.shine-overlay') as HTMLElement;
+                  if (shineOverlay) {
+                    shineOverlay.style.opacity = '0';
+                    shineOverlay.style.animation = 'none';
+                  }
+                }
+              }}
+            >
+              {/* Блик эффект при наведении */}
+              {!cell && !isCellDisabled(index) && (
+                <div
+                  className="shine-overlay"
+                  style={{
+                    position: 'absolute',
+                    top: '-50%',
+                    left: '-50%',
+                    width: '200%',
+                    height: '200%',
+                    background: 'linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
+                    opacity: 0,
+                    transition: 'opacity 0.3s ease',
+                    pointerEvents: 'none',
+                  }}
+                />
+              )}
+              
+              {cell === 'X' ? (
+                <LipstickX />
+              ) : cell === 'O' ? (
+                <LipstickO />
+              ) : (
+                ''
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Play Again Button */}
@@ -371,16 +583,29 @@ export default function Home() {
           <button
             onClick={resetGame}
             style={{
-              padding: '12px 24px',
-              fontSize: '16px',
-              backgroundColor: '#4CAF50',
+              padding: '16px 32px',
+              fontSize: '18px',
+              fontWeight: 600,
+              backgroundColor: 'var(--color-button)',
               color: 'white',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: 'var(--radius-button)',
               cursor: 'pointer',
+              boxShadow: 'var(--shadow-soft)',
+              transition: 'all 0.2s ease-out',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-button-hover)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-button)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-soft)';
             }}
           >
-            Play Again
+            Играть снова
           </button>
         </div>
       )}
