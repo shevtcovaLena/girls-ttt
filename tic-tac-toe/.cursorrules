@@ -1,0 +1,296 @@
+You are helping build a small marketing game: a **Tic-Tac-Toe web app** targeting women aged 25–40 years old.
+The game is built with Next.js, deployed on Vercel, and includes Telegram bot notifications for game results.
+
+## Technology Stack
+
+- **Framework**: Next.js (App Router) with TypeScript
+- **Deployment**: Vercel (connected to GitHub)
+- **Styling**: CSS Modules or Tailwind CSS (your choice)
+- **API**: Next.js Route Handlers for backend operations
+- **Environment Variables**: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+
+## Project Structure
+
+app/
+├── page.tsx # Main game page
+├── layout.tsx # Root layout
+└── api/
+└── notify/
+└── route.ts # Telegram notification endpoint
+components/
+├── Board.tsx # 3x3 game board container
+├── Cell.tsx # Individual cell component
+└── ResultModal.tsx # Win/Loss/Draw modal with promo code
+lib/
+├── gameLogic.ts # Game rules, winner detection, AI logic
+├── generatePromoCode.ts # Promo code generation utility
+└── telegram.ts # Telegram API client function
+public/
+├── lipstick-cursor.png # Custom cursor image
+└── fonts/ # Custom fonts if needed
+styles/
+└── globals.css # Global styles and design tokens
+
+
+
+## Game Mechanics
+
+### Core Rules
+- 3x3 grid Tic-Tac-Toe game
+- Player plays as "X" (goes first) using lipstick-styled marks
+- Computer plays as "O" (goes second)
+- First to get 3 in a row wins
+- If all 9 cells are filled with no winner, it's a draw
+
+### AI Opponent
+- Implement a non-trivial AI strategy:
+  - Minimum: Block player's winning moves and take winning opportunities
+  - Better: Simple minimax algorithm to never lose
+- AI should respond within 1 second of player's move
+- After player's move, show a brief thinking animation before AI plays
+
+### Game States
+1. **Active Game**: Player can click empty cells
+2. **Player Win**: 
+   - Generate random 5-character promo code (letters/numbers, e.g., "A7K3D")
+   - Show victory modal with promo code
+   - Send Telegram notification: "Победа! Промокод выдан: [code]"
+3. **Computer Win**: 
+   - Show defeat modal
+   - Send Telegram notification: "Проигрыш"
+   - Offer "Play Again" button
+4. **Draw**: 
+   - Show draw modal
+   - Offer "Play Again" button
+
+## Telegram Integration
+
+### Setup
+- Create a Telegram bot using @BotFather
+- Get bot token and your chat ID
+- Store in environment variables (never expose on client)
+
+### API Endpoint: `POST /api/notify`
+- Request body: `{ status: 'win' | 'lose', promoCode?: string }`
+- On win: Send "Победа! Промокод выдан: [code]"
+- On lose: Send "Проигрыш"
+- Handle errors gracefully (log to console, don't break game UX)
+- Don't expose bot token or chat ID in browser
+
+### Client-Side
+- After game ends, call `/api/notify` to send notification
+- Don't wait for response (fire and forget)
+- Errors should be logged but not shown to user
+
+## UI/UX Guidelines
+
+### Target Audience: Women 25–40
+- Modern, friendly, not childish
+- Elegant but playful aesthetic
+- Focus on smoothness and polish
+
+### Color Palette
+- **Primary Background**: Very light cream or soft white (#F9F7F4 or similar)
+- **Accent Colors**: Pastel pink (#F5C2E7), dusty rose (#E8B4D0), lavender (#E6D5E8), peach (#FFD4B8)
+- **Text**: Dark charcoal or soft black (#2C2C2C)
+- **Game Marks**: Lipstick-inspired reds/magentas for visual interest
+- **Buttons**: Soft pink or rose tones with hover states
+
+### Typography
+- **Font Family**: Modern sans-serif (e.g., Inter, Manrope, or system fonts)
+- **Headings**: Bold, generous sizing
+- **Body Text**: Clean, high readability
+- **Font Scale**: Use clear hierarchy (no tiny text)
+
+### Components
+- **Rounded Corners**: 12–16px border-radius for friendly feel
+- **Shadows**: Soft, subtle (use box-shadow with low opacity)
+- **Spacing**: Generous padding/margin for breathing room
+- **Buttons**: Rounded, 44px+ height for mobile comfort
+
+### Animations
+- **Duration**: 200–300ms for smooth, snappy feel
+- **Easing**: Use ease-out for natural motion
+- **Avoid**: Overly dramatic or jarring transitions
+- Examples:
+  - Fade-in for modals
+  - Smooth scaling on button hover
+  - Animated promo code appearance
+
+### Responsive Design
+- Mobile-first approach
+- Game board scales to fit screen
+- Touch-friendly tap targets (min 44x44px)
+- Comfortable on both mobile and desktop
+
+## Lipstick Cursor & Hand-Drawn Effect
+
+### Custom Cursor
+1. Use a custom PNG image of a lipstick (pointing at an angle)
+2. Apply via CSS: `cursor: url('/lipstick-cursor.png') 8 12, pointer;` (adjust hotspot as needed)
+3. Only apply custom cursor within the game board area
+4. Fallback to pointer elsewhere
+
+### Hand-Drawn Stroke Animation
+1. Implement X and O marks as SVG paths (not )
+2. Use CSS animation for "drawing" effect:
+@keyframes drawStroke {
+from {
+stroke-dashoffset: <length>;
+}
+to {
+stroke-dashoffset: 0;
+}
+}
+
+
+3. Duration: 300–400ms for satisfying feel
+4. Use lipstick-colored stroke (warm red, magenta, or rose)
+5. Stroke width: Visible but not too thick (6–10px)
+6. Optional: Add slight texture or blur for paint-like effect
+
+### Performance
+- Use CSS animations (GPU-accelerated) not JavaScript
+- Keep stroke animations lightweight
+- Test on mobile for smooth playback
+
+## UI Screens
+
+### 1. Main Game Screen
+┌─────────────────────────────┐
+│ Tic-Tac-Toe with Lipstick │
+│ Play against the computer │
+│ │
+│ ┌──┬──┬──┐ │
+│ │ │ │ │ │
+│ ├──┼──┼──┤ │
+│ │ │ │ │ │
+│ ├──┼──┼──┤ │
+│ │ │ │ │ │
+│ └──┴──┴──┘ │
+│ │
+│ Your turn (X) / Computer thinking... │
+└─────────────────────────────┘
+
+
+- Show whose turn it is
+- Indicate thinking state during AI move
+- Clear visual feedback on hover
+
+### 2. Win Screen
+┌─────────────────────────────┐
+│ 🎉 You Won! 🎉 │
+│ │
+│ Your promo code: │
+│ A7K3D │
+│ [Copy] │
+│ │
+│ [Play Again] │
+└─────────────────────────────┘
+
+
+- Celebratory tone (emoji optional, use tastefully)
+- Large, easy-to-read promo code
+- One-click copy button
+- Clear "Play Again" button
+
+### 3. Lose Screen
+┌─────────────────────────────┐
+│ You lost this round │
+│ │
+│ [Play Again] │
+│ │
+│ Better luck next time! │
+└─────────────────────────────┘
+
+
+- Encouraging, not discouraging
+- Quick path to replay
+
+### 4. Draw Screen
+┌─────────────────────────────┐
+│ It's a Draw! │
+│ │
+│ [Play Again] │
+└─────────────────────────────┘
+
+
+
+## Code Style & Best Practices
+
+### TypeScript
+- Use strict mode
+- Define interfaces for all component props
+- Avoid `any` type
+
+### React
+- Use functional components with hooks
+- `useState` for game state
+- `useCallback` for event handlers to avoid re-renders
+- Extract game logic into a custom hook (e.g., `useGame`)
+
+### File Organization
+- `gameLogic.ts`: Pure functions for game rules, winner detection, AI moves
+- `generatePromoCode.ts`: Promo code generation
+- `telegram.ts`: Telegram API wrapper
+- Components: Keep focused on rendering, not logic
+
+### Naming
+- Clear, descriptive names for variables and functions
+- Use camelCase for JavaScript
+- Use PascalCase for React components
+
+### Example Function Names
+- `calculateWinner(board)` → returns winner or null
+- `getComputerMove(board)` → returns cell index
+- `generatePromoCode()` → returns 5-character code
+- `sendNotification(status, code)` → sends to Telegram
+
+## Performance Considerations
+
+- Avoid unnecessary re-renders (use useCallback, useMemo)
+- Optimize images (lipstick cursor, any graphics)
+- Keep animations on GPU (use transform, opacity)
+- Game board shouldn't require server rendering
+
+## Error Handling
+
+- Telegram notification failure should not break game
+- Log errors to console for debugging
+- Show user-friendly messages for critical errors
+- Game should always be playable, even if Telegram is down
+
+## Testing Checklist
+
+- [ ] Game logic: Player can't click occupied cells
+- [ ] Game logic: Winner detection works correctly
+- [ ] AI: Doesn't make invalid moves
+- [ ] AI: Blocks player's winning moves
+- [ ] Promo code: Generated on every win, varies each time
+- [ ] Telegram: Messages sent on win and loss
+- [ ] Telegram: No message on draw
+- [ ] UI: Responsive on mobile and desktop
+- [ ] UI: Animations smooth and not distracting
+- [ ] Cursor: Lipstick cursor shows in game board only
+- [ ] Strokes: Hand-drawn animation plays smoothly
+- [ ] Accessibility: Keyboard navigation works (Tab to play on mobile)
+- [ ] Deployment: Works on Vercel without errors
+
+## Deployment
+
+- Deploy to Vercel via GitHub
+- Set environment variables in Vercel dashboard:
+  - TELEGRAM_BOT_TOKEN
+  - TELEGRAM_CHAT_ID
+- Test Telegram notifications after deployment
+- Monitor console for errors in production
+
+## What NOT to Do
+
+- Don't expose Telegram bot token in client code
+- Don't use overly heavy UI libraries for simple components
+- Don't add features outside the scope (keep it focused)
+- Don't use localStorage or cookies for game state (session-only)
+- Don't make animations so aggressive they distract from gameplay
+- Don't forget about mobile users
+- Don't skip error handling for Telegram API calls
