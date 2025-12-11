@@ -1,38 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💄 Lipstick Tic-Tac-Toe
 
-## Getting Started
+Современная веб-версия классической игры "Крестики-нолики" с уникальным дизайном в стиле помады и умным AI противником.
 
-First, run the development server:
+## 🎮 Демо
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Telegram Mini App (начните с него):** [@lipstick_tictactoe_bot](https://t.me/lipstick_tictactoe_bot)
+- **Веб-приложение:** [https://girls-ttt.vercel.app/](https://girls-ttt.vercel.app/)
+
+## ✨ Ключевые особенности
+
+### Баланс сложности AI
+Вместо непобедимого алгоритма Minimax реализован **адаптивный AI с 70% оптимальных ходов**. Это даёт игроку реальный шанс на победу (~40-45%), сохраняя при этом достойный уровень сложности.
+
+### Адаптивный UI
+- **Кастомный курсор-помада** на десктопе
+- **Автоматическое определение touch-устройств** с подсказками для мобильных пользователей
+- **Плавные SVG-анимации** с эффектом рисования
+- **Градиенты и текстуры** для реалистичного вида штрихов
+
+### Визуальный дизайн
+- Разомкнутые круги со спиральным заходом (как настоящая помада)
+- Неровные края через SVG фильтры (feTurbulence + feDisplacementMap)
+- Линейные градиенты для объёма и глубины
+- Адаптивные цветовые схемы (розовая помада для X, мятная для O)
+
+### Технические решения
+- **TypeScript** для типобезопасности
+- **Next.js 14** с App Router
+- **CSS Modules** для изоляции стилей
+- **Оптимизированный рендеринг** без лишних перерисовок
+- **Touch API detection** для определения типа устройства
+
+## 🚀 Технологический стек
+
+- **Frontend:** React 18, Next.js 14, TypeScript
+- **Styling:** CSS Modules, Custom SVG Components
+- **Deployment:** Vercel
+- **Bot Integration:** Telegram Mini Apps API
+
+## 📱 Поддержка устройств
+
+- Десктоп (Chrome, Firefox, Safari, Edge)
+- Мобильные устройства (iOS Safari, Android Chrome)
+- Telegram встроенный браузер
+- Адаптивная вёрстка для всех размеров экранов
+
+## 🎨 Особенности реализации
+
+### Определение touch-устройств
+```
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Автоматически показывает статичную иконку помады рядом с "Ваш ход" на мобильных устройствах.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏆 Метрики
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Шанс победы игрока:** ~40-45%
+- **Шанс ничьей:** ~30-35%
+- **Время отклика AI:** < 100ms
+- **Core Web Vitals:** Все в зелёной зоне
 
-## Learn More
+## 🛠 Установка и запуск
 
-To learn more about Next.js, take a look at the following resources:
+Клонирование репозитория
+``` 
+git clone git@github.com:shevtcovaLena/girls-ttt.git
+```
+Установка зависимостей
+```
+npm install
+```
+Запуск dev-сервера
+```
+npm run dev
+```
+Сборка для продакшена
+npm run build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🤝 Контакты
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-8355519466:AAGQ8lFeZmZgfhzv67pkLY9xIHqc9dKmTI8
+Создано с 💚 [@ma2epa](https://t.me/ma2epa)

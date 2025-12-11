@@ -112,8 +112,7 @@ export default function GameResultModal({
             </p>
             <div className="flex items-center justify-center gap-3 mb-6 relative z-10">
               <div
-                className="text-[28px] font-bold text-(--color-accent-3) tracking-wider"
-                style={{ textShadow: "0 2px 8px rgba(202, 110, 135, 0.3)" }}
+                className="text-[28px] font-bold text-(--color-accent-3) tracking-wider drop-shadow-[0_2px_8px_rgba(202,110,135,0.3)]"
               >
                 {promoCode}
               </div>

@@ -39,7 +39,7 @@ export default function LipstickX() {
            L 18 24
            Q 12 18 10 20 Z"
         fill="rgba(150, 80, 100, 0.25)"
-        style={{ filter: 'blur(1px)' }}
+        className="blur-[1px]"
         transform="translate(1, 1)"
       />
       
@@ -53,7 +53,7 @@ export default function LipstickX() {
            L 44 22
            Q 48 18 50 20 Z"
         fill="rgba(150, 80, 100, 0.25)"
-        style={{ filter: 'blur(1px)' }}
+        className="blur-[1px]"
         transform="translate(1, 1)"
       />
       

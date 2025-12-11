@@ -20,7 +20,7 @@ export default function GameBoard({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   return (
-    <div className={`${styles.gameBoard} grid gap-3 justify-center mb-10`} style={{ gridTemplateColumns: 'repeat(3, 100px)', gridTemplateRows: 'repeat(3, 100px)' }}>
+    <div className={`${styles.gameBoard} grid gap-3 justify-center mb-10 grid-cols-[repeat(3,100px)] grid-rows-[repeat(3,100px)]`}>
       {board.map((cell, index) => {
         const isLastMove = lastMoveIndex === index;
         const isComputerMove = isLastMove && cell === 'O';

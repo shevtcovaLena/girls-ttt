@@ -38,7 +38,7 @@ export default function LipstickO() {
         strokeWidth="7"
         fill="none"
         strokeLinecap="round"
-        style={{ filter: 'blur(1px)' }}
+        className="blur-[1px]"
         transform="translate(1, 1)"
       />
       
