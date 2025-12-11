@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { useTelegram } from '@/hooks/useTelegram';
 import { sendTelegramNotification } from '@/lib/telegram';
@@ -12,6 +13,7 @@ type GameStatus = 'active' | 'won' | 'lost' | 'draw';
 
 export default function GameView() {
   const telegramData = useTelegram();
+  const hasNotifiedLoss = useRef(false);
 
   const handleGameEnd = async (promoCode: string) => {
     if (telegramData.userId && promoCode) {
@@ -28,6 +30,18 @@ export default function GameView() {
     handleCellClick,
     resetGame,
   } = useGame(handleGameEnd);
+
+  // Отправка уведомления о проигрыше
+  useEffect(() => {
+    if (gameStatus === 'lost' && telegramData.userId && !hasNotifiedLoss.current) {
+      hasNotifiedLoss.current = true;
+      sendTelegramNotification(telegramData.userId, 'lose');
+    }
+    // Сброс флага при сбросе игры
+    if (gameStatus === 'active') {
+      hasNotifiedLoss.current = false;
+    }
+  }, [gameStatus, telegramData.userId]);
 
   const isCellDisabled = (index: number): boolean => {
     return (
