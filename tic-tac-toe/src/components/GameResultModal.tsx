@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect, startTransition } from "react";
 import styles from "@/app/game.module.css";
 import CopyIcon from "./CopyIcon";
 
@@ -22,19 +22,30 @@ export default function GameResultModal({
   onReset,
 }: GameResultModalProps) {
   const [copied, setCopied] = useState(false);
-  const [confetti, setConfetti] = useState<Array<{ id: number; left: number; delay: number; color: string }>>([]);
-
+  const [confetti, setConfetti] = useState<Array<{ id: number; left: number; delay: number; color: string; duration: number }>>([]);
+  const prevGameStatusRef = useRef<GameStatus | null>(null);
+  
   useEffect(() => {
-    if (gameStatus === 'won') {
-      // Создаем конфетти при победе
-      const pieces = Array.from({ length: 30 }, (_, i) => ({
+    const generateConfetti = () => {
+      return Array.from({ length: 30 }, (_, i) => ({
         id: i,
         left: Math.random() * 100,
         delay: Math.random() * 0.5,
         color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+        duration: 2 + Math.random() * 1,
       }));
-      setConfetti(pieces);
+    };
+    
+    if (gameStatus === 'won' && prevGameStatusRef.current !== 'won') {
+      startTransition(() => {
+        setConfetti(generateConfetti());
+      });
+    } else if (gameStatus !== 'won') {
+      startTransition(() => {
+        setConfetti([]);
+      });
     }
+    prevGameStatusRef.current = gameStatus;
   }, [gameStatus]);
 
   const handleCopy = async () => {
@@ -77,7 +88,7 @@ export default function GameResultModal({
                     left: `${piece.left}%`,
                     background: piece.color,
                     animationDelay: `${piece.delay}s`,
-                    animationDuration: `${2 + Math.random() * 1}s`,
+                    animationDuration: `${piece.duration}s`,
                   }}
                 />
               ))}

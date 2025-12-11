@@ -248,7 +248,6 @@ stroke-dashoffset: 0;
 
 ## Performance Considerations
 
-- Avoid unnecessary re-renders (use useCallback, useMemo)
 - Optimize images (lipstick cursor, any graphics)
 - Keep animations on GPU (use transform, opacity)
 - Game board shouldn't require server rendering
