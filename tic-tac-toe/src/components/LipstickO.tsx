@@ -13,81 +13,57 @@ export default function LipstickO() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id="lipstickGradientO" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#60ae94" />
-          <stop offset="25%" stopColor="#79bba5" />
-          <stop offset="50%" stopColor="#60ae94" />
-          <stop offset="75%" stopColor="#4f9f82" />
-          <stop offset="100%" stopColor="#60ae94" />
+        {/* Линейный градиент по диагонали для видимого перехода */}
+        <linearGradient id="brushStrokeO" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#c5f5e7" />
+          <stop offset="30%" stopColor="#8cd4bb" />
+          <stop offset="60%" stopColor="#60ae94" />
+          <stop offset="100%" stopColor="#3d8a6f" />
         </linearGradient>
-        <filter id="glowO">
-          <feGaussianBlur stdDeviation="1.2" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
       </defs>
       
-      {/* Тень для глубины */}
-      <circle
-        cx="30"
-        cy="30"
-        r="18"
-        stroke="rgba(90, 105, 100, 0.2)"
-        strokeWidth="6"
+      {/* Тонкая тень */}
+      <path
+        d="M 40 7
+           Q 48 8, 52 18
+           Q 56 28, 52 38
+           Q 48 48, 38 52
+           Q 28 56, 18 52
+           Q 8 48, 6 38
+           Q 4 28, 8 18
+           Q 12 10, 22 8
+           Q 26 7, 30 9
+           Q 32 10, 33 12"
+        stroke="rgba(90, 105, 100, 0.25)"
+        strokeWidth="7"
         fill="none"
-        opacity="0.4"
+        strokeLinecap="round"
+        style={{ filter: 'blur(1px)' }}
+        transform="translate(1, 1)"
       />
       
-      {/* Круг O - тоньше линия */}
-      <circle
-        cx="30"
-        cy="30"
-        r="18"
-        stroke="url(#lipstickGradientO)"
-        strokeWidth="5"
+      {/* Разомкнутый круг со спиральным заходом и текстурой */}
+      <path
+        d="M 40 5
+           Q 48 8, 52 18
+           Q 56 28, 52 38
+           Q 48 48, 38 52
+           Q 28 56, 18 52
+           Q 8 48, 6 38
+           Q 4 28, 8 18
+           Q 12 10, 19 9
+           Q 26 7, 31 10
+           Q 32 10 35 12"
+        stroke="url(#brushStrokeO)"
+        strokeWidth="7"
         fill="none"
-        filter="url(#glowO)"
+        strokeLinecap="round"
+        mask="url(#roughEdgeO)"
         className={styles.drawStrokeCircle}
         style={{
-          strokeDasharray: 113.1,
-          strokeDashoffset: 113.1,
+          strokeDasharray: 165,
+          strokeDashoffset: 165,
         }}
-      />
-      
-      {/* Текстура бликов - несколько бликов для объема */}
-      <ellipse
-        cx="25"
-        cy="25"
-        rx="8"
-        ry="12"
-        fill="rgba(255, 255, 255, 0.35)"
-        opacity="0.7"
-      />
-      <ellipse
-        cx="28"
-        cy="22"
-        rx="5"
-        ry="8"
-        fill="rgba(255, 255, 255, 0.25)"
-        opacity="0.5"
-      />
-      
-      {/* Дополнительная текстура - блики по кругу */}
-      <path
-        d="M 30 12 Q 35 15 38 20"
-        stroke="rgba(255, 255, 255, 0.2)"
-        strokeWidth="1.5"
-        fill="none"
-        opacity="0.6"
-      />
-      <path
-        d="M 48 30 Q 45 35 40 38"
-        stroke="rgba(255, 255, 255, 0.15)"
-        strokeWidth="1"
-        fill="none"
-        opacity="0.5"
       />
     </svg>
   );

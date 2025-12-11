@@ -13,97 +13,75 @@ export default function LipstickX() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id="lipstickGradientX" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ca6e87" />
-          <stop offset="30%" stopColor="#d88ba0" />
-          <stop offset="60%" stopColor="#c97d94" />
-          <stop offset="100%" stopColor="#b85a75" />
-        </linearGradient>
-        <linearGradient id="lipstickGradientX2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#b85a75" />
-          <stop offset="50%" stopColor="#ca6e87" />
-          <stop offset="100%" stopColor="#d88ba0" />
-        </linearGradient>
-        <filter id="glowX">
-          <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        {/* Радиальный градиент для объёма */}
+        <radialGradient id="brushStroke1">
+          <stop offset="0%" stopColor="#ffc4d6" />
+          <stop offset="40%" stopColor="#f5a8bd" />
+          <stop offset="70%" stopColor="#e89cae" />
+          <stop offset="100%" stopColor="#d17a93" />
+        </radialGradient>
+        
+        <radialGradient id="brushStroke2">
+          <stop offset="0%" stopColor="#ffb8cd" />
+          <stop offset="40%" stopColor="#f096ad" />
+          <stop offset="70%" stopColor="#dc7f97" />
+          <stop offset="100%" stopColor="#ca6e87" />
+        </radialGradient>
       </defs>
       
-      {/* Тень для глубины */}
+      {/* Тонкая тень */}
       <path
-        d="M15 15 L45 45"
-        stroke="rgba(90, 105, 100, 0.3)"
-        strokeWidth="9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.4"
-      />
-      <path
-        d="M45 15 L15 45"
-        stroke="rgba(90, 105, 100, 0.3)"
-        strokeWidth="9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.4"
+        d="M 10 20 
+           Q 18 12 26 20
+           L 50 44
+           Q 54 48 50 54
+           Q 44 50 38 44
+           L 18 24
+           Q 12 18 10 20 Z"
+        fill="rgba(150, 80, 100, 0.25)"
+        style={{ filter: 'blur(1px)' }}
+        transform="translate(1, 1)"
       />
       
-      {/* Первая линия X */}
       <path
-        d="M15 15 L45 45"
-        stroke="url(#lipstickGradientX)"
-        strokeWidth="8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#glowX)"
+        d="M 50 20
+           Q 54 12 60 18
+           Q 54 24 50 28
+           L 24 54
+           Q 18 60 12 54
+           Q 18 48 24 42
+           L 44 22
+           Q 48 18 50 20 Z"
+        fill="rgba(150, 80, 100, 0.25)"
+        style={{ filter: 'blur(1px)' }}
+        transform="translate(1, 1)"
+      />
+      
+      {/* Первый мазок */}
+      <path
+        d="M 10 20 
+           Q 18 12 26 20
+           L 50 44
+           Q 54 48 50 54
+           Q 44 50 38 44
+           L 18 24
+           Q 12 18 10 20 Z"
+        fill="url(#brushStroke1)"
         className={styles.drawStroke}
-        style={{
-          strokeDasharray: 42.43,
-          strokeDashoffset: 42.43,
-        }}
       />
       
-      {/* Вторая линия X */}
+      {/* Второй мазок */}
       <path
-        d="M45 15 L15 45"
-        stroke="url(#lipstickGradientX2)"
-        strokeWidth="8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#glowX)"
+        d="M 50 20
+           Q 54 12 60 18
+           Q 54 24 50 28
+           L 24 54
+           Q 18 60 12 54
+           Q 18 48 24 42
+           L 44 22
+           Q 48 18 50 20 Z"
+        fill="url(#brushStroke2)"
         className={styles.drawStrokeDelayed}
-        style={{
-          strokeDasharray: 42.43,
-          strokeDashoffset: 42.43,
-        }}
-      />
-      
-      {/* Текстура бликов */}
-      <path
-        d="M20 20 L35 20"
-        stroke="rgba(255, 255, 255, 0.5)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        opacity="0.7"
-      />
-      <path
-        d="M25 25 L40 25"
-        stroke="rgba(255, 255, 255, 0.3)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
-      
-      {/* Текстура блика на пересечении */}
-      <circle
-        cx="30"
-        cy="30"
-        r="3"
-        fill="rgba(255, 255, 255, 0.4)"
-        opacity="0.8"
       />
     </svg>
   );
